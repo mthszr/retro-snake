@@ -5,8 +5,8 @@ import random
 
 pygame.init()
 
-title_font = pygame.font.Font(None, 50)
-score_font = pygame.font.Font(None, 30)
+title_font = pygame.font.Font('font/Retro Gaming.ttf', 40)
+score_font = pygame.font.Font('font/Retro Gaming.ttf', 20)
 
 GREEN = (173, 204, 96)
 DARK_GREEN = (43, 51, 24)
