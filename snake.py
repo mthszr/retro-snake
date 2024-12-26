@@ -50,7 +50,7 @@ class Snake:
 
     def update(self):
         self.body.insert(0, self.body[0] + self.direction)
-        if self.add_segment == True:
+        if self.add_segment:
             self.add_segment = False
         else:
             self.body = self.body[:-1]
@@ -67,8 +67,9 @@ class Game:
         self.score = 0
 
     def draw(self):
-        self.food.draw()
-        self.snake.draw()
+        if self.state == "RUNNING":
+            self.food.draw()
+            self.snake.draw()
 
     def update(self):
         if self.state == "RUNNING":
@@ -90,17 +91,14 @@ class Game:
         if self.snake.body[0].y == number_of_cells or self.snake.body[0].y == -1:
             self.game_over()
 
-    def game_over(self):
-        self.snake.reset()
-        self.food.position = self.food.generate_random_position(self.snake.body)
-        self.state = "STOPPED"
-        self.score = 0
-        self.snake.wall_hit_sound.play()
-
     def check_collision_with_tail(self):
         headless_body = self.snake.body[1:]
         if self.snake.body[0] in headless_body:
             self.game_over()
+
+    def game_over(self):
+        self.snake.wall_hit_sound.play()
+        self.state = "STOPPED"
 
 screen = pygame.display.set_mode((2 * OFFSET + cell_size * number_of_cells, 2 * OFFSET + cell_size * number_of_cells))
 
@@ -116,15 +114,17 @@ pygame.time.set_timer(SNAKE_UPDATE, 200)
 
 while True:
     for event in pygame.event.get():
-        if event.type == SNAKE_UPDATE:
-            game.update()
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-
+        if event.type == SNAKE_UPDATE and game.state == "RUNNING":
+            game.update()
         if event.type == pygame.KEYDOWN:
-            if game.state == "STOPPED":
+            if game.state == "STOPPED" and event.key == pygame.K_SPACE:
+                game.snake.reset()
+                game.food.position = game.food.generate_random_position(game.snake.body)
                 game.state = "RUNNING"
+                game.score = 0
 
             if event.key == pygame.K_UP and game.snake.direction != Vector2(0, 1):
                 game.snake.direction = Vector2(0, -1)
@@ -138,11 +138,18 @@ while True:
     screen.fill(GREEN)
     pygame.draw.rect(screen, DARK_GREEN,
         (OFFSET - 5, OFFSET - 5, cell_size * number_of_cells + 10, cell_size * number_of_cells + 10), 5)
-    game.draw()
+
     title_surface = title_font.render("Retro Snake", True, DARK_GREEN)
     score_surface = score_font.render(str(game.score), True, DARK_GREEN)
     screen.blit(title_surface, (OFFSET - 5, 20))
     screen.blit(score_surface, (OFFSET - 5, OFFSET + cell_size * number_of_cells + 10))
 
+    if game.state == "STOPPED":
+        game_over_surface = title_font.render("Game Over", True, DARK_GREEN)
+        restart_surface = score_font.render("Press SPACE to Restart", True, DARK_GREEN)
+        screen.blit(game_over_surface, (screen.get_width() // 2 - game_over_surface.get_width() // 2, screen.get_height() // 2 - game_over_surface.get_height() // 2 - 50))
+        screen.blit(restart_surface, (screen.get_width() // 2 - restart_surface.get_width() // 2, screen.get_height() // 2 - game_over_surface.get_height() // 2))
+
+    game.draw()
     pygame.display.update()
     clock.tick(60)
